@@ -14,14 +14,11 @@ import kotlin.random.Random
 /** Simula los sensores de un smartwatch y publica un WatchData cada 2 segundos. */
 class SimuladorSmartwatch(
     private val sink: DataSink,
-    private val nombre: String = "María López"
+    private var nombre: String = "María López"
 ) {
     companion object {
         const val INTERVALO_MS = 2000L
         const val UMBRAL_IMPACTO_M_S2 = 22f
-        // Coordenadas de "casa" (cámbialas si quieres)
-        const val CASA_LAT = 13.6929
-        const val CASA_LON = -89.2182
     }
 
     private var fc = 74
@@ -40,6 +37,9 @@ class SimuladorSmartwatch(
     private var ticksFcAlta = 0
     private var ticksCaida = 0
     private var sosActivo = false
+    private var latitud: Double? = null
+    private var longitud: Double? = null
+    private var ubicacionTimestamp: Long? = null
     private var fcAltaNotificada = false
     private var bateriaBajaNotificada = false
     private val alertas = mutableListOf<Alerta>()
@@ -112,6 +112,21 @@ class SimuladorSmartwatch(
         publicar(emergencia = false)
     }
 
+    fun actualizarNombre(nombre: String) {
+        val nombreNormalizado = nombre.trim()
+        if (nombreNormalizado.isEmpty()) return
+        this.nombre = nombreNormalizado
+        publicar(emergencia = false)
+    }
+
+    fun actualizarUbicacion(latitud: Double, longitud: Double) {
+        if (!latitud.isFinite() || !longitud.isFinite()) return
+        this.latitud = latitud
+        this.longitud = longitud
+        ubicacionTimestamp = System.currentTimeMillis()
+        publicar(emergencia = false)
+    }
+
     private fun registrarCaida() {
         ultimaCaidaMs = System.currentTimeMillis()
         ticksCaida = 3
@@ -179,8 +194,6 @@ class SimuladorSmartwatch(
             fc > 110 || fc < 50 -> "Alerta"
             else -> "Todo normal"
         }
-        val lat = if (enCasa) CASA_LAT else CASA_LAT + 0.004
-        val lon = if (enCasa) CASA_LON else CASA_LON + 0.003
         return WatchData(
             adultoMayor = nombre,
             estado = estado,
@@ -190,9 +203,12 @@ class SimuladorSmartwatch(
             acelerometroZ = acelerometroZ,
             caidaDetectada = caidaDetectada,
             movimiento = movimiento,
-            ubicacion = if (enCasa) "En casa" else "Fuera de casa",
-            latitud = lat,
-            longitud = lon,
+            ubicacion = if (latitud != null && longitud != null) "Ubicación activa"
+                else if (enCasa) "En casa (demo)" else "Fuera de casa (demo)",
+            latitud = latitud,
+            longitud = longitud,
+            ubicacionReal = latitud != null && longitud != null,
+            ubicacionTimestamp = ubicacionTimestamp,
             bateria = bateria.toInt(),
             caidas = caidas,
             alertasLeves = alertasLeves,

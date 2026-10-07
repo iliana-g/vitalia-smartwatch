@@ -23,9 +23,11 @@ data class WatchData(
     val acelerometroZ: Float,
     val caidaDetectada: Boolean,
     val movimiento: String,        // "Normal" | "Reposo" | "Activo" | "Caída detectada"
-    val ubicacion: String,         // "En casa" | "Fuera de casa"
-    val latitud: Double,
-    val longitud: Double,
+    val ubicacion: String,         // GPS activo o estado de ubicación de demo
+    val latitud: Double?,
+    val longitud: Double?,
+    val ubicacionReal: Boolean,
+    val ubicacionTimestamp: Long?,
     val bateria: Int,              // 0..100
     val caidas: Int,
     val alertasLeves: Int,
@@ -44,8 +46,12 @@ data class WatchData(
         o.put("caidaDetectada", caidaDetectada)
         o.put("movimiento", movimiento)
         o.put("ubicacion", ubicacion)
-        o.put("latitud", latitud)
-        o.put("longitud", longitud)
+        if (latitud != null && longitud != null) {
+            o.put("latitud", latitud)
+            o.put("longitud", longitud)
+            o.put("ubicacionTimestamp", ubicacionTimestamp)
+        }
+        o.put("ubicacionReal", ubicacionReal)
         o.put("bateria", bateria)
         o.put("caidas", caidas)
         o.put("alertasLeves", alertasLeves)
